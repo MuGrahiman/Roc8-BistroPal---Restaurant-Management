@@ -9,20 +9,7 @@ const address = document.getElementById("address");
 const city = document.getElementById("city");
 const rating = document.getElementById("rating");
 const ID = document.getElementById("ID");
-const API_URL = 'http://localhost:3000/data';
-const getData = async () => {
-  try {
-    const response = await fetch(API_URL);
-    console.log(response)
-    const data = await response.json();
-    console.log(data)
-    return data;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    return [];
-  }
-};
-
+const API_URL = "http://localhost:3000/data";
 // Alerts
 const loadingAlert = (data) => {
   alertContainer.className = "d-block alert alert-primary";
@@ -43,19 +30,17 @@ const errorAlert = (data) => {
   alertContainer.innerText = data;
 };
 const closeAlert = () => (alertContainer.className = "d-none");
-
-// function for Generate Unique Id 
+// function for Generate Unique Id
 const generateUniqueID = () => {
   const timestamp = Date.now().toString(16);
   const randomString = Math.random().toString(16).substring(2);
   return `${timestamp}-${randomString}`;
 };
-
-// Timer 
+// Timer
 const delay = (timeout) =>
   new Promise((resolve) => setTimeout(() => resolve(), timeout));
 
-// function for wipe out the data 
+// function for wipe out the data
 const wipeOut = () => {
   name.value = "";
   cuisine.value = "";
@@ -64,16 +49,87 @@ const wipeOut = () => {
   rating.value = "";
 };
 
-// function for handle the local storage data 
+const getData = async () => {
+  try {
+    const response = await fetch(API_URL);
+    const data = await response.json();
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return [];
+  }
+};
+const postData = async (jsonData) => {
+  console.log(jsonData);
+  try {
+    const response = await fetch("http://localhost:3000/data", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(jsonData),
+    });
+    console.log(response);
+    if (response.ok) {
+      console.log("Data added successfully!");
+    } else {
+      console.error("Failed to add data:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
+};
+const updateDataById = async (id, updatedData) => {
+console.log(id)
+console.log(updatedData)
+try {
+    const response = await fetch(`http://localhost:3000/data/${id}`, {
+      method: 'PATCH', 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedData),
+    });
+console.log(response)
+    if (response.ok) {
+      console.log(`Data with id ${id} updated successfully.`);
+    } else {
+      console.error(`Failed to update data with id ${id}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+
+const deleteDataById = async (id) => {
+  try {
+    const response = await fetch(`http://localhost:3000/data/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      console.log(`Data with id ${id} deleted successfully.`);
+    } else {
+      console.error(
+        `Failed to delete data with id ${id}: ${response.statusText}`
+      );
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
+// function for handle the local storage data
 const getRestaurantData = () => {
-  getData()
-    const Data = localStorage.getItem("restaurantData");
-    return Data ? JSON.parse(Data) : [];
-  };
-  const setRestaurantData = (data) => {
-    localStorage.setItem("restaurantData", data);
-    return;
-  };
+  getData();
+  const Data = localStorage.getItem("restaurantData");
+  return Data ? JSON.parse(Data) : [];
+};
+const setRestaurantData = (data) => {
+  localStorage.setItem("restaurantData", data);
+  return;
+};
 
 const handleAddRestaurantData = (e) => {
   e.preventDefault();
@@ -88,6 +144,7 @@ const handleAddRestaurantData = (e) => {
       city: city.value,
       rating: rating.value,
     };
+    postData(restaurantData);
     const Data = getRestaurantData();
     if (Data.length > 0) {
       const data = JSON.stringify([...Data, restaurantData]);
@@ -103,7 +160,7 @@ const handleAddRestaurantData = (e) => {
   }
 };
 
-// function for load the data on loading the window 
+// function for load the data on loading the window
 const loadElement = () => {
   loadingAlert("Loading data...");
   const restaurants = getRestaurantData();
@@ -111,7 +168,7 @@ const loadElement = () => {
   delay(1000).then(() => closeAlert());
 };
 
-// function for creating elements for load the data 
+// function for creating elements for load the data
 const createElement = (restaurants) => {
   restaurantList.innerHTML = "";
   if (restaurants.length === 0) {
@@ -139,7 +196,7 @@ const createElement = (restaurants) => {
   return;
 };
 
-// function for sort the data by its name 
+// function for sort the data by its name
 const sortByName = (data) => {
   return data.sort((a, b) => {
     const nameA = a.name.toUpperCase();
@@ -154,7 +211,7 @@ const sortByName = (data) => {
   });
 };
 
-// function for sort the data by its rating 
+// function for sort the data by its rating
 const sortByRating = (data) => {
   return data.sort((a, b) => a.rating - b.rating);
 };
@@ -186,10 +243,12 @@ const handleFilter = (data) => {
   return;
 };
 
-// function for deleting the data 
+// function for deleting the data
 const deleteRestaurant = (id) => {
   loadingAlert("Deleting data...");
   try {
+    deleteDataById(id);
+
     const restaurants = getRestaurantData();
     if (restaurants) {
       const updatedData = restaurants.filter(
@@ -205,7 +264,7 @@ const deleteRestaurant = (id) => {
   }
 };
 
-// function for finding the data by matching by its id 
+// function for finding the data by matching by its id
 const updateElement = (id) =>
   new Promise((resolve, reject) => {
     try {
@@ -225,7 +284,7 @@ const updateElement = (id) =>
   });
 
 //   function for handle the updating data
-const handleupdateRestaurantData = (e) => {
+const handleupdateRestaurantData =async (e) => {
   e.preventDefault();
 
   loadingAlert("data is updating ...");
@@ -239,6 +298,7 @@ const handleupdateRestaurantData = (e) => {
       city: city.value,
       rating: rating.value,
     };
+   await updateDataById(ID.value, restaurantData);
 
     const restaurantupdatedData = restaurants.map((restaurant) =>
       restaurant.id === ID.value ? restaurantData : restaurant
