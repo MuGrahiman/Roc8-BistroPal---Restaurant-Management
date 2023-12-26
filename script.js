@@ -9,7 +9,7 @@ const address = document.getElementById("address");
 const city = document.getElementById("city");
 const rating = document.getElementById("rating");
 const ID = document.getElementById("ID");
-const API_URL = "http://localhost:3000/data";
+const API_URL = "http://localhost:3000/data/";
 // Alerts
 const loadingAlert = (data) => {
   alertContainer.className = "d-block alert alert-primary";
@@ -48,7 +48,7 @@ const wipeOut = () => {
   city.value = "";
   rating.value = "";
 };
-
+//  endpoint for get the data
 const getData = async () => {
   try {
     const response = await fetch(API_URL);
@@ -60,10 +60,23 @@ const getData = async () => {
     return [];
   }
 };
+//  endpoint for get the data
+const getSingleData = async (id) => {
+  try {
+    const response = await fetch(API_URL+id);
+    const data = await response.json();
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return [];
+  }
+};
+//  endpoint for post the data
 const postData = async (jsonData) => {
   console.log(jsonData);
   try {
-    const response = await fetch("http://localhost:3000/data", {
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -80,31 +93,34 @@ const postData = async (jsonData) => {
     console.error("Error:", error.message);
   }
 };
+//  endpoint for update the data
 const updateDataById = async (id, updatedData) => {
-console.log(id)
-console.log(updatedData)
-try {
-    const response = await fetch(`http://localhost:3000/data/${id}`, {
-      method: 'PATCH', 
+  console.log(id);
+  console.log(updatedData);
+  try {
+    const response = await fetch(API_URL+id, {
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(updatedData),
     });
-console.log(response)
+    console.log(response);
     if (response.ok) {
       console.log(`Data with id ${id} updated successfully.`);
     } else {
-      console.error(`Failed to update data with id ${id}: ${response.statusText}`);
+      console.error(
+        `Failed to update data with id ${id}: ${response.statusText}`
+      );
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
   }
 };
-
+//  endpoint for delete the data
 const deleteDataById = async (id) => {
   try {
-    const response = await fetch(`http://localhost:3000/data/${id}`, {
+    const response = await fetch(API_URL+id, {
       method: "DELETE",
     });
 
@@ -120,18 +136,7 @@ const deleteDataById = async (id) => {
   }
 };
 
-// function for handle the local storage data
-const getRestaurantData = () => {
-  getData();
-  const Data = localStorage.getItem("restaurantData");
-  return Data ? JSON.parse(Data) : [];
-};
-const setRestaurantData = (data) => {
-  localStorage.setItem("restaurantData", data);
-  return;
-};
-
-const handleAddRestaurantData = (e) => {
+const handleAddRestaurantData =async (e) => {
   e.preventDefault();
   loadingAlert("data is adding ...");
   try {
@@ -144,15 +149,7 @@ const handleAddRestaurantData = (e) => {
       city: city.value,
       rating: rating.value,
     };
-    postData(restaurantData);
-    const Data = getRestaurantData();
-    if (Data.length > 0) {
-      const data = JSON.stringify([...Data, restaurantData]);
-      setRestaurantData(data);
-    } else {
-      const data = JSON.stringify([restaurantData]);
-      setRestaurantData(data);
-    }
+   const result = await postData(restaurantData);
     successAlert("data successfully added");
     wipeOut();
   } catch (error) {
@@ -161,9 +158,9 @@ const handleAddRestaurantData = (e) => {
 };
 
 // function for load the data on loading the window
-const loadElement = () => {
+const loadElement = async() => {
   loadingAlert("Loading data...");
-  const restaurants = getRestaurantData();
+  const restaurants =await getData();
   createElement(restaurants);
   delay(1000).then(() => closeAlert());
 };
@@ -217,9 +214,9 @@ const sortByRating = (data) => {
 };
 
 // function for handling the sorting process
-const handleSort = (data) => {
+const handleSort =async (data) => {
   let restaurantupdatedData;
-  const restaurantData = getRestaurantData();
+  const restaurantData = await getData();
   if (data === "name") restaurantupdatedData = sortByName(restaurantData);
 
   if (data === "rating") restaurantupdatedData = sortByRating(restaurantData);
@@ -230,9 +227,9 @@ const handleSort = (data) => {
 };
 
 // function for handling the filter process
-const handleFilter = (data) => {
+const handleFilter =async (data) => {
   let restaurantupdatedData;
-  const restaurantData = getRestaurantData();
+  const restaurantData =await getData();
   if (data === "all") restaurantupdatedData = restaurantData;
   else
     restaurantupdatedData = restaurantData.filter(
@@ -244,52 +241,24 @@ const handleFilter = (data) => {
 };
 
 // function for deleting the data
-const deleteRestaurant = (id) => {
+const deleteRestaurant =async (id) => {
   loadingAlert("Deleting data...");
   try {
-    deleteDataById(id);
-
-    const restaurants = getRestaurantData();
-    if (restaurants) {
-      const updatedData = restaurants.filter(
-        (restaurant) => restaurant.id !== id
-      );
-      const data = JSON.stringify(updatedData);
-      setRestaurantData(data);
-      successAlert("Data successfully deleted");
-      loadElement();
-    }
+   await deleteDataById(id);
+    successAlert("Data successfully deleted");
+    loadElement();
   } catch (error) {
     errorAlert(error.message || "something went wrong");
   }
 };
 
-// function for finding the data by matching by its id
-const updateElement = (id) =>
-  new Promise((resolve, reject) => {
-    try {
-      const restaurants = getRestaurantData();
-      if (restaurants) {
-        const restaurantData = restaurants.filter(
-          (restaurant) => restaurant.id === id
-        )[0];
-        if (restaurantData) {
-          resolve(restaurantData);
-        } else throw error("Couldnt find the data");
-      }
-      throw error("Couldnt find the data");
-    } catch (error) {
-      reject(error.message || "something went wrong");
-    }
-  });
-
 //   function for handle the updating data
-const handleupdateRestaurantData =async (e) => {
+const handleupdateRestaurantData = async (e) => {
   e.preventDefault();
 
   loadingAlert("data is updating ...");
   try {
-    const restaurants = getRestaurantData();
+    const restaurants = getData();
     const restaurantData = {
       id: ID.value,
       name: name.value,
@@ -298,13 +267,7 @@ const handleupdateRestaurantData =async (e) => {
       city: city.value,
       rating: rating.value,
     };
-   await updateDataById(ID.value, restaurantData);
-
-    const restaurantupdatedData = restaurants.map((restaurant) =>
-      restaurant.id === ID.value ? restaurantData : restaurant
-    );
-    const data = JSON.stringify(restaurantupdatedData);
-    setRestaurantData(data);
+    await updateDataById(ID.value, restaurantData);
     successAlert("data successfully added");
     delay(1000).then(() => closeAlert());
   } catch (error) {

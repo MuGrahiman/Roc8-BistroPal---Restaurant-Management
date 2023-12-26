@@ -89,7 +89,7 @@
             loadingAlert("Loading data...");
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
-            const restaurantData = await updateElement(id)
+            const restaurantData = await getSingleData(id)
             name.value = restaurantData.name;
             cuisine.value = restaurantData.cuisine;
             address.value = restaurantData.address;
