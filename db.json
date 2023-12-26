@@ -1,0 +1,20 @@
+{
+  "data": [
+      {
+          "id": "18ca0f26ea7-7698e1d229f2f",
+          "name": "Mujeeb Rahiman",
+          "cuisine": "Mexican",
+          "address": "Chekidappuram",
+          "city": "Malappuram",
+          "rating": "5"
+      },
+      {
+          "id": "18ca1531c0c-7dd67413b7283",
+          "name": "a@gmail.com",
+          "cuisine": "af",
+          "address": "Chekidappuram",
+          "city": "Malappuram",
+          "rating": "9"
+      }
+  ]
+}

@@ -9,6 +9,19 @@ const address = document.getElementById("address");
 const city = document.getElementById("city");
 const rating = document.getElementById("rating");
 const ID = document.getElementById("ID");
+const API_URL = 'http://localhost:3000/data';
+const getData = async () => {
+  try {
+    const response = await fetch(API_URL);
+    console.log(response)
+    const data = await response.json();
+    console.log(data)
+    return data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return [];
+  }
+};
 
 // Alerts
 const loadingAlert = (data) => {
@@ -53,6 +66,7 @@ const wipeOut = () => {
 
 // function for handle the local storage data 
 const getRestaurantData = () => {
+  getData()
     const Data = localStorage.getItem("restaurantData");
     return Data ? JSON.parse(Data) : [];
   };
