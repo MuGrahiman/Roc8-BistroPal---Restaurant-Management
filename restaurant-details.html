@@ -53,7 +53,6 @@
     <script>
         const constainerDiv = document.getElementById('containerDiv')
         window.onload = async () => {
-            loadingAlert("Loading data...");
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
             const restaurantData = await getSingleData(id)

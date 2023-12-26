@@ -11,35 +11,25 @@ const rating = document.getElementById("rating");
 const ID = document.getElementById("ID");
 const API_URL = "http://localhost:3000/data/";
 // Alerts
-const loadingAlert = (data) => {
-  alertContainer.className = "d-block alert alert-primary";
+const showAlert = (type, data) => {
+  alertContainer.className = `d-block alert alert-${type}`;
   alertContainer.innerText = data;
+  delay(3000).then(() => {
+    closeAlert();
+  });
 };
-const warningAlert = (data) => {
-  alertContainer.className = "d-block alert alert-warning";
-  alertContainer.innerText = data;
-};
-const successAlert = (data) => {
-  console.log(data);
-  alertContainer.className = "d-block alert alert-success ";
-  alertContainer.innerText = data;
-};
-const errorAlert = (data) => {
-  alertContainer.className = "d-block alert alert-danger ";
-
-  alertContainer.innerText = data;
-};
+const loadingAlert = (data) => showAlert("primary", data);
+const warningAlert = (data) => showAlert("warning", data);
+const successAlert = (data) => showAlert("success", data);
+const errorAlert = (data) => showAlert("danger", data);
 const closeAlert = () => (alertContainer.className = "d-none");
-// function for Generate Unique Id
-const generateUniqueID = () => {
-  const timestamp = Date.now().toString(16);
-  const randomString = Math.random().toString(16).substring(2);
-  return `${timestamp}-${randomString}`;
-};
 // Timer
 const delay = (timeout) =>
-  new Promise((resolve) => setTimeout(() => resolve(), timeout));
-
+  new Promise((resolve) => {
+    let timeId;
+    if (timeId) clearTimeout(timeId);
+    timeId = setTimeout(() => resolve(), timeout);
+  });
 // function for wipe out the data
 const wipeOut = () => {
   name.value = "";
@@ -48,33 +38,39 @@ const wipeOut = () => {
   city.value = "";
   rating.value = "";
 };
+// function for Generate Unique Id
+const generateUniqueID = () => {
+  const timestamp = Date.now().toString(16);
+  const randomString = Math.random().toString(16).substring(2);
+  return `${timestamp}-${randomString}`;
+};
 //  endpoint for get the data
 const getData = async () => {
+  loadingAlert('Data is Loading ...')
   try {
     const response = await fetch(API_URL);
     const data = await response.json();
-    console.log(data);
+    successAlert('Data Successfully Loaded');
     return data;
   } catch (error) {
-    console.error("Error fetching data:", error);
-    return [];
+    throw new error(`Error fetching data:${error.message || 'some thing went wrong'}`, );
   }
 };
 //  endpoint for get the data
 const getSingleData = async (id) => {
+  loadingAlert('Data is Loading ...')
   try {
-    const response = await fetch(API_URL+id);
+    const response = await fetch(API_URL + id);
     const data = await response.json();
-    console.log(data);
+    successAlert('Data Successfully Loaded');
     return data;
   } catch (error) {
-    console.error("Error fetching data:", error);
-    return [];
+    throw new error(`Error fetching data:${error.message || 'some thing went wrong'}`, );
   }
 };
 //  endpoint for post the data
 const postData = async (jsonData) => {
-  console.log(jsonData);
+  loadingAlert('Data is Loading ...')
   try {
     const response = await fetch(API_URL, {
       method: "POST",
@@ -83,62 +79,65 @@ const postData = async (jsonData) => {
       },
       body: JSON.stringify(jsonData),
     });
-    console.log(response);
     if (response.ok) {
-      console.log("Data added successfully!");
-    } else {
+    successAlert('Data Successfully Loaded');
+  } else {
       console.error("Failed to add data:", response.statusText);
-    }
+    throw new error(`Failed to add data:${response.statusText || 'some thing went wrong'}`, );
+  }
   } catch (error) {
     console.error("Error:", error.message);
+    throw new error(`Error:${error.message || 'some thing went wrong'}`, );
   }
 };
 //  endpoint for update the data
 const updateDataById = async (id, updatedData) => {
-  console.log(id);
-  console.log(updatedData);
+  loadingAlert('Data is Loading ...')
   try {
-    const response = await fetch(API_URL+id, {
+    const response = await fetch(API_URL + id, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(updatedData),
     });
-    console.log(response);
     if (response.ok) {
-      console.log(`Data with id ${id} updated successfully.`);
-    } else {
+    successAlert('Data Successfully Loaded');
+  } else {
       console.error(
         `Failed to update data with id ${id}: ${response.statusText}`
       );
-    }
+    throw new error(`Failed to update data:${response.statusText || 'some thing went wrong'}`, );
+  }
   } catch (error) {
     console.error("Error:", error);
+    throw new error(`Error:${error.message || 'some thing went wrong'}`, );
   }
 };
 //  endpoint for delete the data
 const deleteDataById = async (id) => {
+  loadingAlert('Data is Loading ...')
   try {
-    const response = await fetch(API_URL+id, {
+    const response = await fetch(API_URL + id, {
       method: "DELETE",
     });
 
     if (response.ok) {
-      console.log(`Data with id ${id} deleted successfully.`);
-    } else {
+    successAlert('Data Successfully Loaded');
+  } else {
       console.error(
         `Failed to delete data with id ${id}: ${response.statusText}`
       );
-    }
+    throw new error(`Failed to delete data:${response.statusText || 'some thing went wrong'}`, );
+  }
   } catch (error) {
     console.error("Error:", error);
+    throw new error(`Error:${error.message || 'some thing went wrong'}`, );
   }
 };
 
-const handleAddRestaurantData =async (e) => {
+const handleAddRestaurantData = async (e) => {
   e.preventDefault();
-  loadingAlert("data is adding ...");
   try {
     const id = generateUniqueID();
     const restaurantData = {
@@ -149,8 +148,7 @@ const handleAddRestaurantData =async (e) => {
       city: city.value,
       rating: rating.value,
     };
-   const result = await postData(restaurantData);
-    successAlert("data successfully added");
+     await postData(restaurantData);
     wipeOut();
   } catch (error) {
     errorAlert(error.message || "something went wrong");
@@ -158,13 +156,10 @@ const handleAddRestaurantData =async (e) => {
 };
 
 // function for load the data on loading the window
-const loadElement = async() => {
-  loadingAlert("Loading data...");
-  const restaurants =await getData();
+const loadElement = async () => {
+  const restaurants = await getData();
   createElement(restaurants);
-  delay(1000).then(() => closeAlert());
 };
-
 // function for creating elements for load the data
 const createElement = (restaurants) => {
   restaurantList.innerHTML = "";
@@ -192,7 +187,6 @@ const createElement = (restaurants) => {
   });
   return;
 };
-
 // function for sort the data by its name
 const sortByName = (data) => {
   return data.sort((a, b) => {
@@ -207,14 +201,12 @@ const sortByName = (data) => {
     return 0;
   });
 };
-
 // function for sort the data by its rating
 const sortByRating = (data) => {
   return data.sort((a, b) => a.rating - b.rating);
 };
-
 // function for handling the sorting process
-const handleSort =async (data) => {
+const handleSort = async (data) => {
   let restaurantupdatedData;
   const restaurantData = await getData();
   if (data === "name") restaurantupdatedData = sortByName(restaurantData);
@@ -225,11 +217,10 @@ const handleSort =async (data) => {
 
   if (restaurantupdatedData) createElement(restaurantupdatedData);
 };
-
 // function for handling the filter process
-const handleFilter =async (data) => {
+const handleFilter = async (data) => {
   let restaurantupdatedData;
-  const restaurantData =await getData();
+  const restaurantData = await getData();
   if (data === "all") restaurantupdatedData = restaurantData;
   else
     restaurantupdatedData = restaurantData.filter(
@@ -239,26 +230,20 @@ const handleFilter =async (data) => {
   createElement(restaurantupdatedData);
   return;
 };
-
 // function for deleting the data
-const deleteRestaurant =async (id) => {
-  loadingAlert("Deleting data...");
+const deleteRestaurant = async (id) => {
   try {
-   await deleteDataById(id);
-    successAlert("Data successfully deleted");
+    await deleteDataById(id);
     loadElement();
   } catch (error) {
     errorAlert(error.message || "something went wrong");
   }
 };
-
 //   function for handle the updating data
 const handleupdateRestaurantData = async (e) => {
   e.preventDefault();
 
-  loadingAlert("data is updating ...");
   try {
-    const restaurants = getData();
     const restaurantData = {
       id: ID.value,
       name: name.value,
@@ -268,8 +253,6 @@ const handleupdateRestaurantData = async (e) => {
       rating: rating.value,
     };
     await updateDataById(ID.value, restaurantData);
-    successAlert("data successfully added");
-    delay(1000).then(() => closeAlert());
   } catch (error) {
     errorAlert(error.message || "something went wrong");
   }
